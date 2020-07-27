@@ -89,7 +89,7 @@ def validate():
         print(classification_report(t.flatten(y_batch), t.flatten(y_hat)))
 
 
-def predict(sentence, print_entity=False):
+def predict(sentence, word_emb, print_entity=False):
     """
     模型预测
     """
@@ -101,7 +101,7 @@ def predict(sentence, print_entity=False):
         bilstm_crf.load(opt.load_model_path)
 
     # 数据
-    word_emb = load_word_embedding()
+    # word_emb = load_word_embedding()
     test_dataset = RmrbDataset(word_emb, train=False, validate=False, test_sentence=sentence)
 
     x = list(test_dataset[0][0])  # 拿到该句子的input 表示
@@ -112,26 +112,28 @@ def predict(sentence, print_entity=False):
     tag_idx = bilstm_crf(x).squeeze()
     tag_idx = tag_idx.numpy().tolist()
 
+    length = min(opt.max_length, len(sentence))
+    entity_list = []
+    i = 0
+    while i < length:
+        if tag_idx[i] == 1:
+            entity = sentence[i]
+            j = i + 1
+            for j in range(i+1, length):
+                if tag_idx[j] == 2:
+                    entity += sentence[j]
+                else:
+                    break
+            i = j
+            entity_list.append(entity)
+        else:
+            i += 1
+
     if print_entity:
-        entity_list = []
-        i = 0
-        while i < len(tag_idx):
-            if tag_idx[i] == 1:
-                entity = sentence[i]
-                for j in range(i+1, len(tag_idx)):
-                    if tag_idx[j] == 2:
-                        i = j + 1
-                        entity += sentence[j]
-                    else:
-                        i = j
-                        break
-                entity_list.append(entity)
-            else:
-                i += 1
         print(entity_list)
         print('\n')
 
-    return idx2tag(tag_idx)
+    return idx2tag(tag_idx), entity_list
 
 
 if __name__ == "__main__":

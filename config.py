@@ -20,7 +20,7 @@ class DefaultConfig:
     lr_decay = 0.95
     weight_decay = 1e-4
 
-    word_emb_path = 'D:/项目/sgns.sogounews.bigram-char/sgns.sogounews.bigram-char.bin'
+    word_emb_path = 'D:/Project File/临时文件/sgns.sogounews.bigram-char/sgns.sogounews.bigram-char.bin'
     vocab_file_path = os.path.join(ROOT, './resource/rmrb/vocab.json')
     tag_file_path = os.path.join(ROOT, './resource/rmrb/tag.json')
     train_data_path = os.path.join(ROOT, './resource/rmrb/train.txt')

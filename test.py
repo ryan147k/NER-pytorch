@@ -1,28 +1,34 @@
-# from main import predict
+from main import predict
+from utils import load_word_embedding
+import json
+import demjson
 
-# keywords_path = r'C:\Users\suwen\Desktop\数据融合\7.18\keywords.txt'
-# with open(keywords_path, 'r', encoding='utf-8') as f:
-#     keywords = [line.strip() for line in f.readlines()]
+
+word_emb = load_word_embedding()
 
 
-# fout_true = open('./true.txt', 'a', encoding='utf-8')
-# fout_false = open('./false.txt', 'a', encoding='utf-8')
-# for keyword in keywords:
-#     if keyword == '':
-#         print('空字符')
-#         continue
-#     try:
-#         tags = predict(keyword)
-#     except:
-#         tags = predict(keyword)
-#     if 'B-Com' in tags and 'I-Com' in tags:
-#         fout_true.write(keyword + '\n')
-#     else:
-#         fout_false.write(keyword + '\n')
+with open('./中国上市公司meta数据.jsonl', 'r', encoding='utf-8') as f:
+    lines = f.readlines()
+for line in lines:
+    dic = demjson.decode(line)
+    name = dic['compName']
+    keywords = dic['keywords']
+    description = dic['description']
 
-from data import RmrbDataset
-from gensim.models import KeyedVectors
+    res = {
+        "name": name,
+        "alias": []
+    }
 
-word_emb = KeyedVectors.load_word2vec_format('D:/项目/sgns.sogounews.bigram-char/voc.txt')
-rmrb_dataset = RmrbDataset(word_emb=word_emb, train=False)
-print(list(rmrb_dataset)[0][0][1].shape)
+    alias_list1, alias_list2 = [], []
+    if keywords != '':
+        _, alias_list1 = predict(keywords, word_emb)
+    if description != '':
+        _, alias_list2 = predict(description, word_emb)
+
+    alias_list = list(set(alias_list1 + alias_list2))
+    for alias in alias_list:
+        res['alias'].append(alias)
+
+    with open('./alias.josnl', 'a', encoding='utf-8') as fout:
+        fout.write('{}\n'.format(json.dumps(res, ensure_ascii=False)))
