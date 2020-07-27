@@ -1,6 +1,8 @@
 # coding=utf-8
 from config import opt
 import json
+import time
+from gensim.models import KeyedVectors
 
 
 def word2idx(word_list):
@@ -51,3 +53,15 @@ def idx2tag(idx):
     for i in idx:
         tag_list.append(tag_dic_reverse[i])
     return tag_list
+
+
+def load_word_embedding():
+    """
+    加载词向量到内存中
+    """
+    print("Loading word embedding, Please wait")
+    start = time.time()
+    word_emb = KeyedVectors.load_word2vec_format(opt.word_emb_path)
+    cost = time.time() - start
+    print("Load complete, take {}min{}sec".format(int(cost/60), int(cost % 60)))
+    return word_emb

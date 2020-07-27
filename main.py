@@ -6,7 +6,8 @@ from data import RmrbDataset
 from torch.utils.data import DataLoader
 from sklearn.metrics import classification_report
 from tensorboardX import SummaryWriter
-from utils import word2idx, idx2tag
+from utils import idx2tag
+from utils import load_word_embedding
 
 
 def train():
@@ -17,13 +18,16 @@ def train():
     test_writer = SummaryWriter(log_dir='./log/test')
 
     # step1 模型
-    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.emb_dim, opt.emb_dim//2, opt.tag_num, dropout=opt.dropout)
+    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.char_emb_dim, opt.word_emb_dim,
+                            (opt.char_emb_dim+opt.word_emb_dim)//2,
+                            opt.tag_num, dropout=opt.dropout)
     if opt.load_model_path:     # 是否加载checkpoint
         bilstm_crf.load(opt.load_model_path)
 
     # step2 数据
-    rmrb_train_dataset = RmrbDataset(train=True)
-    rmrb_test_dataset = RmrbDataset(train=False)
+    word_emb = load_word_embedding()
+    rmrb_train_dataset = RmrbDataset(word_emb=word_emb, train=True)
+    rmrb_test_dataset = RmrbDataset(word_emb=word_emb, train=False)
     rmrb_train_dataloader = DataLoader(rmrb_train_dataset, batch_size=64, shuffle=True)
     rmrb_test_dataloader = DataLoader(rmrb_test_dataset, batch_size=len(rmrb_test_dataset), shuffle=True)
 
@@ -65,19 +69,22 @@ def train():
             bilstm_crf.train()  # 将模型恢复成训练模式
 
 
-def test():
+def validate():
     """
-    模型测试
+    模型验证
     """
     # 模型
-    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.emb_dim, opt.emb_dim//2, opt.tag_num, dropout=opt.dropout)
+    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.char_emb_dim, opt.word_emb_dim,
+                            (opt.char_emb_dim+opt.word_emb_dim)//2,
+                            opt.tag_num, dropout=opt.dropout)
     if opt.load_model_path:
         bilstm_crf.load(opt.load_model_path)
 
     # 数据
-    test_dataset = RmrbDataset(train=False)
-    test_dataloader = DataLoader(test_dataset, batch_size=len(test_dataset))
-    for i, (x_batch, y_batch) in enumerate(test_dataloader):
+    word_emb = load_word_embedding()
+    validate_dataset = RmrbDataset(word_emb, train=False, validate=True)
+    validate_dataloader = DataLoader(validate_dataset, batch_size=len(validate_dataset))
+    for i, (x_batch, y_batch) in enumerate(validate_dataloader):
         y_hat = bilstm_crf(x_batch)
         print(classification_report(t.flatten(y_batch), t.flatten(y_hat)))
 
@@ -87,16 +94,22 @@ def predict(sentence, print_entity=False):
     模型预测
     """
     # 模型
-    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.emb_dim, opt.emb_dim//2, opt.tag_num, dropout=opt.dropout)
-    if opt.load_model_path:
+    bilstm_crf = BiLSTM_CRF(opt.vocab_size, opt.char_emb_dim, opt.word_emb_dim,
+                            (opt.char_emb_dim+opt.word_emb_dim)//2,
+                            opt.tag_num, dropout=opt.dropout)
+    if opt.load_model_path:     # 是否加载checkpoint
         bilstm_crf.load(opt.load_model_path)
-    bilstm_crf.eval()
 
     # 数据
-    x = word2idx(sentence)
-    x = t.LongTensor(x).unsqueeze(dim=0)
+    word_emb = load_word_embedding()
+    test_dataset = RmrbDataset(word_emb, train=False, validate=False, test_sentence=sentence)
 
-    tag_idx = bilstm_crf(x).squeeze(dim=0)
+    x = list(test_dataset[0][0])  # 拿到该句子的input 表示
+    # TODO: dataloader的batch是将x里面的每个tensor都增加一个维度
+    x[0] = x[0].unsqueeze(dim=0)
+    x[1] = x[1].unsqueeze(dim=0)
+
+    tag_idx = bilstm_crf(x).squeeze()
     tag_idx = tag_idx.numpy().tolist()
 
     if print_entity:
@@ -122,6 +135,6 @@ def predict(sentence, print_entity=False):
 
 
 if __name__ == "__main__":
-    # test()
-    print(predict("生物科技,深圳康泰生物制品股份有限公司", print_entity=True))
+    print(predict("中石化、中石油和中国建筑(5.030, -0.03, -0.59%)进入榜单前三名。中国平安(75.940, -1.06, -1.38%)、工行银行、中铁股份、上汽集团(17.970, 0.01, 0.06%)、中国铁建(8.730, -0.08, -0.91%)、中国移动、中国人寿(35.020, -0.38, -1.07%)进入前十。", print_entity=True))
     # train()
+    # validate()

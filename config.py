@@ -10,7 +10,8 @@ sys.path.append(ROOT)
 class DefaultConfig:
     max_length = 88  # 数据中一个句子的最大长度
     vocab_size = 2350   # 字表大小
-    emb_dim = 100    # 字向量维数
+    char_emb_dim = 100    # 字向量维数
+    word_emb_dim = 300    # 词向量维数
     tag_num = 3     # 标签数量
 
     max_epoch = 30
@@ -19,11 +20,12 @@ class DefaultConfig:
     lr_decay = 0.95
     weight_decay = 1e-4
 
+    word_emb_path = 'D:/项目/sgns.sogounews.bigram-char/sgns.sogounews.bigram-char'
     vocab_file_path = os.path.join(ROOT, './resource/rmrb/vocab.json')
     tag_file_path = os.path.join(ROOT, './resource/rmrb/tag.json')
     train_data_path = os.path.join(ROOT, './resource/rmrb/train.txt')
     test_data_path = os.path.join(ROOT, './resource/rmrb/test.txt')
-    load_model_path = os.path.join(ROOT, './ckpts/BiLSTM_CRF_0726_12h39m48s.pth')
+    load_model_path = os.path.join(ROOT, './ckpts/BiLSTM_CRF_0727_10h08m45s.pth')
     # load_model_path = None
 
 
