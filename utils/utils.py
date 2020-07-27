@@ -61,7 +61,7 @@ def load_word_embedding():
     """
     print("Loading word embedding, Please wait")
     start = time.time()
-    word_emb = KeyedVectors.load_word2vec_format(opt.word_emb_path)
+    word_emb = KeyedVectors.load_word2vec_format(opt.word_emb_path, binary=True)
     cost = time.time() - start
     print("Load complete, take {}min{}sec".format(int(cost/60), int(cost % 60)))
     return word_emb
