@@ -120,7 +120,7 @@ def predict(sentence, print_entity=False):
         print(entity_list)
         print('\n')
 
-    return idx2tag(tag_idx), entity_list
+    return idx2tag(tag_idx)
 
 
 if __name__ == "__main__":

@@ -52,4 +52,4 @@ def main():
             fout.write('{}\n'.format(json.dumps(res, ensure_ascii=False)))
 
 
-main()
+print(predict("北京商汤科技有限公司"))
